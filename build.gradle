@@ -1,0 +1,67 @@
+plugins {
+    id 'java'
+    id 'maven-publish'
+}
+
+group = 'com.airwallex'
+version = '0.1.0-SNAPSHOT'
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+    withSourcesJar()
+    withJavadocJar()
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.17.2'
+    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.17.2'
+    implementation 'com.nimbusds:nimbus-jose-jwt:9.40'
+    implementation 'org.slf4j:slf4j-api:2.0.13'
+
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.11.0'
+    testImplementation 'org.assertj:assertj-core:3.26.3'
+    testRuntimeOnly 'org.slf4j:slf4j-simple:2.0.13'
+}
+
+test {
+    useJUnitPlatform()
+}
+
+publishing {
+    repositories {
+        maven {
+            name = 'GitHubPackages'
+            url = 'https://maven.pkg.github.com/airwallex/ap2-java-sdk'
+            credentials {
+                username = project.findProperty('gpr.user') ?: System.getenv('GITHUB_ACTOR')
+                password = project.findProperty('gpr.token') ?: System.getenv('GITHUB_TOKEN')
+            }
+        }
+    }
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+            pom {
+                name = 'AP2 Java SDK'
+                description = 'Java SDK for Agent Payments Protocol (AP2)'
+                url = 'https://github.com/airwallex/ap2-java-sdk'
+                licenses {
+                    license {
+                        name = 'Apache License, Version 2.0'
+                        url = 'http://www.apache.org/licenses/LICENSE-2.0'
+                    }
+                }
+                scm {
+                    connection = 'scm:git:git://github.com/airwallex/ap2-java-sdk.git'
+                    developerConnection = 'scm:git:ssh://github.com/airwallex/ap2-java-sdk.git'
+                    url = 'https://github.com/airwallex/ap2-java-sdk'
+                }
+            }
+        }
+    }
+}
