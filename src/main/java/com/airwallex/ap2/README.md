@@ -1,0 +1,2 @@
+These models are generated from [AP2 Repository](https://github.com/google-agentic-commerce/AP2/tree/main/src/ap2/types), since 
+there is no Java/Kotlin SDK. Should be replaced with SDK once available.
