@@ -18,11 +18,14 @@ import com.airwallex.ap2.CryptoUtils;
 import com.airwallex.ap2.KbSdJwt;
 import com.airwallex.ap2.SdJwt;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.security.cert.CertificateFactory;
+import java.security.cert.X509Certificate;
 import java.security.interfaces.ECPublicKey;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,6 +41,85 @@ public final class SdJwtChain {
     @FunctionalInterface
     public interface PublicKeyProvider {
         ECPublicKey resolve(SdJwtCommon.ParsedToken token);
+    }
+
+    public static class X5cOrKidPublicKeyProvider implements PublicKeyProvider {
+        private final Function<String, ECPublicKey> kidLookup;
+        private final List<X509Certificate> trustedRoots;
+
+        public X5cOrKidPublicKeyProvider(Function<String, ECPublicKey> kidLookup) {
+            this(kidLookup, null);
+        }
+
+        public X5cOrKidPublicKeyProvider(Function<String, ECPublicKey> kidLookup,
+                List<X509Certificate> trustedRoots) {
+            this.kidLookup = kidLookup;
+            this.trustedRoots = trustedRoots;
+        }
+
+        @Override
+        public ECPublicKey resolve(SdJwtCommon.ParsedToken token) {
+            Map<String, Object> header = token.getHeader();
+            if (header.containsKey("x5c")) {
+                return resolveX5cKey(header);
+            }
+            String keyId = (String) header.get("kid");
+            if (keyId == null) {
+                throw new IllegalArgumentException(
+                        "Missing or invalid 'kid' or 'x5c' in the first token header");
+            }
+            ECPublicKey key = kidLookup.apply(keyId);
+            if (key == null) {
+                throw new IllegalArgumentException("Provider returned no key for key_id: " + keyId);
+            }
+            return key;
+        }
+
+        @SuppressWarnings("unchecked")
+        private ECPublicKey resolveX5cKey(Map<String, Object> header) {
+            List<String> x5c = (List<String>) header.get("x5c");
+            if (x5c == null || x5c.isEmpty()) {
+                throw new IllegalArgumentException("x5c header must be a non-empty list");
+            }
+            try {
+                CertificateFactory cf = CertificateFactory.getInstance("X.509");
+                List<X509Certificate> certs = new ArrayList<>();
+                for (String certB64 : x5c) {
+                    byte[] derBytes = CryptoUtils.b64urlDecode(certB64);
+                    certs.add((X509Certificate) cf.generateCertificate(
+                            new java.io.ByteArrayInputStream(derBytes)));
+                }
+
+                for (int i = 0; i < certs.size() - 1; i++) {
+                    X509Certificate subjectCert = certs.get(i);
+                    X509Certificate issuerCert = certs.get(i + 1);
+                    subjectCert.verify(issuerCert.getPublicKey());
+                }
+
+                if (trustedRoots != null && !trustedRoots.isEmpty()) {
+                    X509Certificate lastCert = certs.get(certs.size() - 1);
+                    boolean verified = false;
+                    for (X509Certificate root : trustedRoots) {
+                        try {
+                            lastCert.verify(root.getPublicKey());
+                            verified = true;
+                            break;
+                        } catch (Exception ignored) {
+                        }
+                    }
+                    if (!verified) {
+                        throw new IllegalArgumentException(
+                                "Certificate chain does not chain to a trusted root");
+                    }
+                }
+
+                return (ECPublicKey) certs.get(0).getPublicKey();
+            } catch (IllegalArgumentException e) {
+                throw e;
+            } catch (Exception e) {
+                throw new IllegalArgumentException("Failed to resolve x5c key: " + e.getMessage(), e);
+            }
+        }
     }
 
     public static List<Map<String, Object>> verifyChain(
