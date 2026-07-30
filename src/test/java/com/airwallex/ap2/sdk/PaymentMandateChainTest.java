@@ -41,9 +41,7 @@ class PaymentMandateChainTest {
     @Test
     void verifyPassesWithMatchingTransactionId() {
         var open = new OpenPaymentMandate(null, List.of(), Map.of(), null, null, null, null, null, null, null, null);
-        var closed = new PaymentMandate(null, "txn-1", new Merchant("m-1", "Shop", null),
-                new Amount(1000, "USD"), new PaymentInstrument("card-1", "card", null), null, null, null, null, null,
-                null);
+        var closed = new PaymentMandate(null, "txn-1", new Merchant("m-1", "Shop", null), new Amount(1000, "USD"), new PaymentInstrument("card-1", "card", null), null, null, null, null, null);
         var chain = new PaymentMandateChain(open, closed);
         var violations = chain.verify("txn-1");
         assertThat(violations).isEmpty();
@@ -52,9 +50,7 @@ class PaymentMandateChainTest {
     @Test
     void verifyFailsOnTransactionIdMismatch() {
         var open = new OpenPaymentMandate(null, List.of(), Map.of(), null, null, null, null, null, null, null, null);
-        var closed = new PaymentMandate(null, "txn-1", new Merchant("m-1", "Shop", null),
-                new Amount(1000, "USD"), new PaymentInstrument("card-1", "card", null), null, null, null, null, null,
-                null);
+        var closed = new PaymentMandate(null, "txn-1", new Merchant("m-1", "Shop", null), new Amount(1000, "USD"), new PaymentInstrument("card-1", "card", null), null, null, null, null, null);
         var chain = new PaymentMandateChain(open, closed);
         var violations = chain.verify("txn-2");
         assertThat(violations).anyMatch(v -> v.contains("transaction_id mismatch"));
@@ -63,9 +59,7 @@ class PaymentMandateChainTest {
     @Test
     void verifyAllowsNullTransactionId() {
         var open = new OpenPaymentMandate(null, List.of(), Map.of(), null, null, null, null, null, null, null, null);
-        var closed = new PaymentMandate(null, "txn-1", new Merchant("m-1", "Shop", null),
-                new Amount(1000, "USD"), new PaymentInstrument("card-1", "card", null), null, null, null, null, null,
-                null);
+        var closed = new PaymentMandate(null, "txn-1", new Merchant("m-1", "Shop", null), new Amount(1000, "USD"), new PaymentInstrument("card-1", "card", null), null, null, null, null, null);
         var chain = new PaymentMandateChain(open, closed);
         assertThat(chain.verify((String) null)).isEmpty();
     }
@@ -74,9 +68,7 @@ class PaymentMandateChainTest {
     void verifyRunsConstraints() {
         var open = new OpenPaymentMandate(null, List.of(new AmountRange("USD", 500, null)), Map.of(), null, null, null,
                 null, null, null, null, null);
-        var closed = new PaymentMandate(null, "txn-1", new Merchant("m-1", "Shop", null),
-                new Amount(1000, "USD"), new PaymentInstrument("card-1", "card", null), null, null, null, null, null,
-                null);
+        var closed = new PaymentMandate(null, "txn-1", new Merchant("m-1", "Shop", null), new Amount(1000, "USD"), new PaymentInstrument("card-1", "card", null), null, null, null, null, null);
         var chain = new PaymentMandateChain(open, closed);
         var violations = chain.verify(null, null, null);
         assertThat(violations).anyMatch(v -> v.contains("exceeds maximum"));

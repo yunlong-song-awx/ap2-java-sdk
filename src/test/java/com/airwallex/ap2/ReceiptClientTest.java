@@ -29,9 +29,7 @@ class ReceiptClientTest {
     }
 
     private PaymentMandate paymentMandate() {
-        return new PaymentMandate(null, "txn-1", new Merchant("m-1", "Shop", null),
-                new Amount(1000, "USD"), new PaymentInstrument("card-1", "card", null), null, null, null, null, null,
-                null);
+        return new PaymentMandate(null, "txn-1", new Merchant("m-1", "Shop", null), new Amount(1000, "USD"), new PaymentInstrument("card-1", "card", null), null, null, null, null, null);
     }
 
     private static Map<String, Object> map(String k1, Object v1, String k2, Object v2, String k3, Object v3,

@@ -37,12 +37,7 @@ class MandateClientTest {
     }
 
     private PaymentMandate paymentMandate() {
-        return new PaymentMandate(null, "txn-123",
-                new Merchant("m-1", "Shop", null),
-                new Amount(1000, "USD"),
-                new PaymentInstrument("card-1", "card", null),
-                null, null, null,
-                System.currentTimeMillis() / 1000, null, null);
+        return new PaymentMandate(null, "txn-123", new Merchant("m-1", "Shop", null), new Amount(1000, "USD"), new PaymentInstrument("card-1", "card", null), null, null, null, System.currentTimeMillis() / 1000, null);
     }
 
     @Test
@@ -141,5 +136,12 @@ class MandateClientTest {
         List<Map<String, Object>> payloads = client.verify(chainToken, provider, "https://verifier.example.com",
                 "nonce-1", 300, System.currentTimeMillis() / 1000);
         assertThat(payloads).hasSizeGreaterThanOrEqualTo(2);
+    }
+
+    @Test
+    void verifyRejectsNonSdJwtFormatInSingleMode() throws Exception {
+        assertThatThrownBy(() -> client.verify("plain-jwt-without-tilde", issuerKey.toECPublicKey(), null, null, 300, null))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Only SD-JWT formats");
     }
 }

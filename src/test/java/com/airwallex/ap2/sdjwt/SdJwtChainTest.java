@@ -54,11 +54,7 @@ class SdJwtChainTest {
     }
 
     private PaymentMandate paymentMandate() {
-        return new PaymentMandate(null, "txn-1",
-                new Merchant("m1", "Shop", null),
-                new Amount(500L, "USD"),
-                new PaymentInstrument("card-1", "card", null),
-                null, null, null, now, null, null);
+        return new PaymentMandate(null, "txn-1", new Merchant("m1", "Shop", null), new Amount(500L, "USD"), new PaymentInstrument("card-1", "card", null), null, null, null, now, null);
     }
 
     @Test

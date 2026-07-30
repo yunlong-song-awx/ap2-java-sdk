@@ -29,8 +29,7 @@ public record PaymentMandate(
     String executionDate,
     Map<String, Object> riskData,
     Long iat,
-    Long exp,
-    String userAuthorization) {
+    Long exp) {
 
     public static final String VCT = "mandate.payment.1";
 
@@ -47,6 +46,6 @@ public record PaymentMandate(
             PaymentInstrument paymentInstrument) {
         return new PaymentMandate(
                 VCT, transactionId, payee, paymentAmount, paymentInstrument,
-                null, null, null, null, null, null);
+                null, null, null, null, null);
     }
 }

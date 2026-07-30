@@ -17,6 +17,7 @@ package com.airwallex.ap2.mandate;
 import com.airwallex.ap2.CryptoUtils;
 import com.airwallex.ap2.KbSdJwt;
 import com.airwallex.ap2.SdJwt;
+import com.airwallex.ap2.sdk.Constraints;
 import com.airwallex.ap2.sdjwt.DisclosureMetadata;
 import com.airwallex.ap2.sdjwt.SdJwtChain;
 import com.airwallex.ap2.sdjwt.SdJwtCommon;
@@ -89,6 +90,20 @@ public class MandateClient {
             publicKeyProvider = (SdJwtChain.PublicKeyProvider) keyOrProvider;
         }
 
+        String finalToken = segments[segments.length - 1];
+        if (finalToken.contains("~")) {
+            boolean hasKbJwt = !finalToken.substring(finalToken.lastIndexOf("~") + 1).isEmpty()
+                    && !finalToken.endsWith("~");
+            if (hasKbJwt && (expectedAud == null || expectedNonce == null)) {
+                throw new IllegalArgumentException(
+                        "The provided presentation token contains a Key Binding JWT, but "
+                                + "expectedAud and expectedNonce were not provided. "
+                                + "Both must be supplied to securely verify this presentation.");
+            }
+        } else if (isSingle) {
+            throw new IllegalArgumentException("Only SD-JWT formats are currently supported for verification.");
+        }
+
         List<SdJwtCommon.ParsedToken> parsedTokens = new ArrayList<>();
         for (int i = 0; i < segments.length; i++) {
             parsedTokens.add(SdJwtCommon.parseToken(canonicalChainSegment(segments[i], i, segments.length)));
@@ -108,6 +123,26 @@ public class MandateClient {
         logEvent("verify", "after", Map.of("success", true, "numPayloads", payloads.size()));
 
         return payloads;
+    }
+
+    @SuppressWarnings("unchecked")
+    public <T> Mandate<T> verify(String token, ECPublicKey issuerPublicKey, Class<T> payloadType) {
+        return verify(token, issuerPublicKey, payloadType, null, null, 300, null);
+    }
+
+    @SuppressWarnings("unchecked")
+    public <T> Mandate<T> verify(String token, ECPublicKey issuerPublicKey, Class<T> payloadType,
+            String expectedAud, String expectedNonce, int clockSkewSeconds, Long currentTime) {
+        String[] segments = token.split("~~", -1);
+        if (segments.length != 1) {
+            throw new IllegalArgumentException(
+                    "Typed verify requires a single token; use verify(String, Object, ...) for chains.");
+        }
+        List<Map<String, Object>> payloads = verify(token, issuerPublicKey,
+                expectedAud, expectedNonce, clockSkewSeconds, currentTime);
+        return new SdJwtMandate<>(
+                SdJwtCommon.parseToken(canonicalChainSegment(segments[0], 0, 1)).getCanonical(),
+                Constraints.MAPPER.convertValue(payloads.get(0), payloadType));
     }
 
     public String present(ECPrivateKey holderKey, String mandateToken, List<Object> payloads,
@@ -164,6 +199,11 @@ public class MandateClient {
             String mandateTokJoined = mandateToken.replaceAll("~+$", "");
             return mandateTokJoined + "~~" + presJwt;
         }
+    }
+
+    public String present(ECPrivateKey holderKey, String mandateToken, List<Object> payloads,
+            String nonce, String aud) {
+        return present(holderKey, mandateToken, payloads, null, null, null, nonce, aud, "sd_hash");
     }
 
     public String getClosedMandateJwt(String presentationToken) {

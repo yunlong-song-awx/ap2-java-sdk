@@ -176,9 +176,7 @@ class ConstraintsTest {
         var pisp = new Pisp("Acme", "Acme Pay", "acme.example.com");
         var open = new OpenPaymentMandate(null, List.of(new AllowedPisps(List.of(pisp))), Map.of(), null, null, null, null,
                 null, null, null, null);
-        var closed = new PaymentMandate(null, "txn-1", new Merchant("m-1", "Shop", null),
-                new Amount(1000, "USD"), new PaymentInstrument("card-1", "card", null), pisp, null, null, null, null,
-                null);
+        var closed = new PaymentMandate(null, "txn-1", new Merchant("m-1", "Shop", null), new Amount(1000, "USD"), new PaymentInstrument("card-1", "card", null), pisp, null, null, null, null);
         var violations = Constraints.checkPaymentConstraints(open, closed, null, null);
         assertThat(violations).isEmpty();
     }
@@ -188,9 +186,7 @@ class ConstraintsTest {
         var open = new OpenPaymentMandate(null, List.of(new AllowedPisps(
                 List.of(new Pisp("Other", "Other", "other.example.com")))),
                 Map.of(), null, null, null, null, null, null, null, null);
-        var closed = new PaymentMandate(null, "txn-1", new Merchant("m-1", "Shop", null),
-                new Amount(1000, "USD"), new PaymentInstrument("card-1", "card", null),
-                new Pisp("Acme", "Acme Pay", "acme.example.com"), null, null, null, null, null);
+        var closed = new PaymentMandate(null, "txn-1", new Merchant("m-1", "Shop", null), new Amount(1000, "USD"), new PaymentInstrument("card-1", "card", null), new Pisp("Acme", "Acme Pay", "acme.example.com"), null, null, null, null);
         var violations = Constraints.checkPaymentConstraints(open, closed, null, null);
         assertThat(violations).anyMatch(v -> v.contains("not in allowed list"));
     }
@@ -219,9 +215,7 @@ class ConstraintsTest {
     void executionDatePasses() {
         var open = new OpenPaymentMandate(null, List.of(new ExecutionDate("2025-01-01", "2025-12-31")), Map.of(), null,
                 null, null, null, null, null, null, null);
-        var closed = new PaymentMandate(null, "txn-1", new Merchant("m-1", "Shop", null),
-                new Amount(1000, "USD"), new PaymentInstrument("card-1", "card", null), null, "2025-06-15", null, null,
-                null, null);
+        var closed = new PaymentMandate(null, "txn-1", new Merchant("m-1", "Shop", null), new Amount(1000, "USD"), new PaymentInstrument("card-1", "card", null), null, "2025-06-15", null, null, null);
         var violations = Constraints.checkPaymentConstraints(open, closed, null, null);
         assertThat(violations).isEmpty();
     }
@@ -230,9 +224,7 @@ class ConstraintsTest {
     void executionDateFailsBeforeWindow() {
         var open = new OpenPaymentMandate(null, List.of(new ExecutionDate("2025-06-01", null)), Map.of(), null, null, null,
                 null, null, null, null, null);
-        var closed = new PaymentMandate(null, "txn-1", new Merchant("m-1", "Shop", null),
-                new Amount(1000, "USD"), new PaymentInstrument("card-1", "card", null), null, "2025-01-01", null, null,
-                null, null);
+        var closed = new PaymentMandate(null, "txn-1", new Merchant("m-1", "Shop", null), new Amount(1000, "USD"), new PaymentInstrument("card-1", "card", null), null, "2025-01-01", null, null, null);
         var violations = Constraints.checkPaymentConstraints(open, closed, null, null);
         assertThat(violations).anyMatch(v -> v.contains("before allowed window"));
     }
@@ -241,9 +233,7 @@ class ConstraintsTest {
     void executionDateFailsAfterWindow() {
         var open = new OpenPaymentMandate(null, List.of(new ExecutionDate(null, "2025-06-01")), Map.of(), null, null, null,
                 null, null, null, null, null);
-        var closed = new PaymentMandate(null, "txn-1", new Merchant("m-1", "Shop", null),
-                new Amount(1000, "USD"), new PaymentInstrument("card-1", "card", null), null, "2025-12-31", null, null,
-                null, null);
+        var closed = new PaymentMandate(null, "txn-1", new Merchant("m-1", "Shop", null), new Amount(1000, "USD"), new PaymentInstrument("card-1", "card", null), null, "2025-12-31", null, null, null);
         var violations = Constraints.checkPaymentConstraints(open, closed, null, null);
         assertThat(violations).anyMatch(v -> v.contains("after allowed window"));
     }
@@ -252,9 +242,7 @@ class ConstraintsTest {
     void presetPaymentClaimsDetectsPayeeMismatch() {
         var open = new OpenPaymentMandate(null, List.of(), Map.of(),
                 new Merchant("m-1", "Shop", null), null, null, null, null, null, null, null);
-        var closed = new PaymentMandate(null, "txn-1", new Merchant("m-2", "Other", null),
-                new Amount(1000, "USD"), new PaymentInstrument("card-1", "card", null), null, null, null, null, null,
-                null);
+        var closed = new PaymentMandate(null, "txn-1", new Merchant("m-2", "Other", null), new Amount(1000, "USD"), new PaymentInstrument("card-1", "card", null), null, null, null, null, null);
         var violations = Constraints.checkPaymentConstraints(open, closed, null, null);
         assertThat(violations).anyMatch(v -> v.contains("Pre-set payee mismatch"));
     }
@@ -263,9 +251,7 @@ class ConstraintsTest {
     void presetPaymentClaimsDetectsAmountMismatch() {
         var open = new OpenPaymentMandate(null, List.of(), Map.of(), null, new Amount(2000, "USD"), null, null, null, null,
                 null, null);
-        var closed = new PaymentMandate(null, "txn-1", new Merchant("m-1", "Shop", null),
-                new Amount(1000, "USD"), new PaymentInstrument("card-1", "card", null), null, null, null, null, null,
-                null);
+        var closed = new PaymentMandate(null, "txn-1", new Merchant("m-1", "Shop", null), new Amount(1000, "USD"), new PaymentInstrument("card-1", "card", null), null, null, null, null, null);
         var violations = Constraints.checkPaymentConstraints(open, closed, null, null);
         assertThat(violations).anyMatch(v -> v.contains("Pre-set amount mismatch"));
     }
@@ -274,9 +260,7 @@ class ConstraintsTest {
     void presetPaymentClaimsDetectsPaymentInstrumentMismatch() {
         var open = new OpenPaymentMandate(null, List.of(), Map.of(), null, null,
                 new PaymentInstrument("card-2", "card", null), null, null, null, null, null);
-        var closed = new PaymentMandate(null, "txn-1", new Merchant("m-1", "Shop", null),
-                new Amount(1000, "USD"), new PaymentInstrument("card-1", "card", null), null, null, null, null, null,
-                null);
+        var closed = new PaymentMandate(null, "txn-1", new Merchant("m-1", "Shop", null), new Amount(1000, "USD"), new PaymentInstrument("card-1", "card", null), null, null, null, null, null);
         var violations = Constraints.checkPaymentConstraints(open, closed, null, null);
         assertThat(violations).anyMatch(v -> v.contains("Pre-set payment_instrument mismatch"));
     }
@@ -285,9 +269,7 @@ class ConstraintsTest {
     void presetPaymentClaimsDetectsExecutionDateMismatch() {
         var open = new OpenPaymentMandate(null, List.of(), Map.of(), null, null, null, null, "2025-06-01", null, null,
                 null);
-        var closed = new PaymentMandate(null, "txn-1", new Merchant("m-1", "Shop", null),
-                new Amount(1000, "USD"), new PaymentInstrument("card-1", "card", null), null, "2025-12-31", null, null,
-                null, null);
+        var closed = new PaymentMandate(null, "txn-1", new Merchant("m-1", "Shop", null), new Amount(1000, "USD"), new PaymentInstrument("card-1", "card", null), null, "2025-12-31", null, null, null);
         var violations = Constraints.checkPaymentConstraints(open, closed, null, null);
         assertThat(violations).anyMatch(v -> v.contains("Pre-set execution_date mismatch"));
     }
@@ -348,9 +330,7 @@ class ConstraintsTest {
     // ── Helpers ────────────────────────────────────────────────────────────
 
     private PaymentMandate makePaymentMandate(int amountCents, String currency) {
-        return new PaymentMandate(null, "txn-1", new Merchant("m-1", "Shop", null),
-                new Amount(amountCents, currency), new PaymentInstrument("card-1", "card", null), null, null, null, null,
-                null, null);
+        return new PaymentMandate(null, "txn-1", new Merchant("m-1", "Shop", null), new Amount(amountCents, currency), new PaymentInstrument("card-1", "card", null), null, null, null, null, null);
     }
 
     private Checkout makeCheckout(Merchant merchant, CartLineItem... lineItems) {
