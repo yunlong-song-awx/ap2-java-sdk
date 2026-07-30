@@ -3,6 +3,7 @@ package com.airwallex.ap2;
 import com.airwallex.ap2.protocol.CheckoutReceipt;
 import com.airwallex.ap2.protocol.PaymentMandate;
 import com.airwallex.ap2.protocol.PaymentReceipt;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.security.interfaces.ECPublicKey;
 import java.time.Instant;
 import java.util.HashMap;
@@ -14,6 +15,7 @@ import org.slf4j.LoggerFactory;
 
 public class ReceiptClient {
     private static final Logger logger = LoggerFactory.getLogger(ReceiptClient.class);
+    private static final ObjectMapper mapper = new ObjectMapper();
 
     private Map<String, Object> createBaseReceipt(String status, String issuer, String reference) {
         Map<String, Object> base = new HashMap<>();
@@ -59,9 +61,9 @@ public class ReceiptClient {
         try {
             Map<String, Object> payload = JwtHelper.verifyJwt(receiptJwt, receiptIssuerPublicKey);
             if (isPaymentReceipt) {
-                // validate payload shape
+                mapper.convertValue(payload, PaymentReceipt.Success.class);
             } else {
-                // validate payload shape
+                mapper.convertValue(payload, CheckoutReceipt.Success.class);
             }
             String receiptReference = (String) payload.get("reference");
             if (hasReferenceInStoreCb != null && !hasReferenceInStoreCb.apply(receiptReference)) {

@@ -25,9 +25,16 @@ import com.airwallex.ap2.sdjwt.SdJwtIssuer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nimbusds.jose.jwk.Curve;
 import com.nimbusds.jose.jwk.ECKey;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.security.interfaces.ECPrivateKey;
 import java.security.interfaces.ECPublicKey;
+import java.time.Instant;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.slf4j.Logger;
@@ -37,6 +44,8 @@ public class MandateClient {
     private static final Logger logger = LoggerFactory.getLogger(MandateClient.class);
     private static final ObjectMapper mapper = new ObjectMapper();
     private static final int COMPACT_JWT_PARTS = 3;
+    private static final Path LOG_FILE_PATH = Paths.get(
+            System.getProperty("user.home"), ".logs", "ap2", "mandate_operations.log");
 
     public String create(List<Object> payloads, ECPrivateKey issuerKey, String issuerKeyId,
             DisclosureMetadata sd, ECPublicKey holderPublicKey, Map<String, Object> extraClaims) {
@@ -47,6 +56,14 @@ public class MandateClient {
         if (extraClaims != null) allExtra.putAll(extraClaims);
         SdJwtIssuer issuer = SdJwt.create(payloads.get(0), issuerKey, issuerKeyId, sd, false, allExtra);
         return issuer.getSdJwtIssuance();
+    }
+
+    public String create(List<Object> payloads, ECPrivateKey issuerKey) {
+        return create(payloads, issuerKey, null, null, null, null);
+    }
+
+    public String create(List<Object> payloads, ECPrivateKey issuerKey, DisclosureMetadata sd) {
+        return create(payloads, issuerKey, null, sd, null, null);
     }
 
     public List<Map<String, Object>> verify(String token, Object keyOrProvider,
@@ -79,8 +96,18 @@ public class MandateClient {
 
         logger.debug("verify: mode={}, numTokens={}", isSingle ? "single" : "chain", segments.length);
 
-        return SdJwtChain.verifyChain(parsedTokens, publicKeyProvider,
+        logEvent("verify", "before", Map.of(
+                "mode", isSingle ? "single" : "chain",
+                "numTokens", segments.length,
+                "hasAud", expectedAud != null,
+                "hasNonce", expectedNonce != null));
+
+        List<Map<String, Object>> payloads = SdJwtChain.verifyChain(parsedTokens, publicKeyProvider,
                 clockSkewSeconds, expectedAud, expectedNonce, currentTime);
+
+        logEvent("verify", "after", Map.of("success", true, "numPayloads", payloads.size()));
+
+        return payloads;
     }
 
     public String present(ECPrivateKey holderKey, String mandateToken, List<Object> payloads,
@@ -163,6 +190,21 @@ public class MandateClient {
                     "y", ecKey.getY().toString()));
         } catch (Exception e) {
             throw new RuntimeException("Failed to convert EC key to JWK", e);
+        }
+    }
+
+    private void logEvent(String eventType, String stage, Map<String, Object> data) {
+        Map<String, Object> logEntry = new HashMap<>();
+        logEntry.put("timestamp", Instant.now().toString());
+        logEntry.put("event", eventType);
+        logEntry.put("stage", stage);
+        logEntry.put("data", data);
+        try {
+            Files.createDirectories(LOG_FILE_PATH.getParent());
+            String line = mapper.writeValueAsString(logEntry) + "\n";
+            Files.writeString(LOG_FILE_PATH, line, StandardOpenOption.CREATE, StandardOpenOption.APPEND);
+        } catch (IOException e) {
+            logger.warn("Failed to write to mandate log file: {}", e.getMessage());
         }
     }
 }
