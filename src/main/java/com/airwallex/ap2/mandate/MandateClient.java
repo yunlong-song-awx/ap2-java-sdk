@@ -182,7 +182,15 @@ public class MandateClient {
             claimsForHolder = Map.of("delegate_payload", List.of(DisclosureMetadata.sdClaimsToDisclose(payloads.get(0))));
         }
 
-        String prevTokenForBinding = redactedOpenTok != null ? redactedOpenTok : mandateToken;
+        String bindingToken = mandateToken;
+        int lastSep = mandateToken.lastIndexOf("~~");
+        if (lastSep >= 0) {
+            bindingToken = mandateToken.substring(lastSep + 2);
+        }
+        // NOTE: divergence from Python SDK (ap2/sdk/mandate.py).
+        // The Python SDK binds against the full mandate_token even when it is a
+        // chain, which would cause parse_token to fail on `~~` separators.
+        String prevTokenForBinding = redactedOpenTok != null ? redactedOpenTok : bindingToken;
         SdJwtCommon.ParsedToken prevTokenParsed = SdJwtCommon.parseToken(prevTokenForBinding);
 
         SdJwtIssuer issuer = KbSdJwt.create(prevTokenParsed, holderKey, payloads.get(0),
@@ -214,8 +222,14 @@ public class MandateClient {
     }
 
     private String canonicalChainSegment(String segment, int index, int total) {
+        // NOTE: divergence from Python SDK (ap2/sdk/mandate.py).
+        // The Python _canonical_chain_segment does not handle plain JWT segments
+        // (no '~'). When present() strips the trailing '~' from a chain like
+        // "token1~~token2~", the middle segment "token2" becomes a bare JWT.
+        // The `if (!segment.contains("~"))` guard below restores the '~'.
         if (index == total - 1 || segment.endsWith("~")) return segment;
-        String lastPart = segment.contains("~") ? segment.substring(segment.lastIndexOf("~") + 1) : segment;
+        if (!segment.contains("~")) return segment + "~";
+        String lastPart = segment.substring(segment.lastIndexOf("~") + 1);
         if (lastPart.split("\\.").length == COMPACT_JWT_PARTS) return segment;
         return segment + "~";
     }
