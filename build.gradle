@@ -11,6 +11,7 @@ release {
         requireBranch.set('main')
     }
     tagTemplate = 'v${version}'
+    buildTasks = ['publish']
 }
 
 java {
