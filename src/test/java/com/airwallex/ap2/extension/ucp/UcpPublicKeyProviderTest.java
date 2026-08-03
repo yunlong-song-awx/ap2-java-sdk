@@ -20,7 +20,7 @@ class UcpPublicKeyProviderTest {
     @Test
     void resolveFailsWhenKidMissing() {
         var provider = new UcpPublicKeyProvider();
-        var token = newToken(Map.of("iss", "https://example.com"), Map.of());
+        var token = newToken(Map.of(), Map.of("iss", "https://example.com"));
         assertThatThrownBy(() -> provider.resolve(token))
                 .isInstanceOf(RuntimeException.class);
     }
