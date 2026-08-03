@@ -10,6 +10,7 @@ release {
     git {
         requireBranch.set('main')
     }
+    tagTemplate = 'v${version}'
 }
 
 java {
