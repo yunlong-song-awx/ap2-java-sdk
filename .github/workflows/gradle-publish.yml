@@ -1,22 +1,14 @@
-# This workflow uses actions that are not certified by GitHub.
-# They are provided by a third-party and are governed by
-# separate terms of service, privacy policy, and support
-# documentation.
-# This workflow will build a package using Gradle and then publish it to GitHub packages when a release is created
-# For more information see: https://github.com/actions/setup-java/blob/main/docs/advanced-usage.md#Publishing-using-gradle
-
 name: Gradle Package
 
 on:
-  release:
-    types: [created]
+  workflow_dispatch:
 
 jobs:
   build:
 
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
       packages: write
 
     steps:
@@ -26,20 +18,18 @@ jobs:
       with:
         java-version: '17'
         distribution: 'temurin'
-        server-id: github # Value of the distributionManagement/repository/id field of the pom.xml
-        settings-path: ${{ github.workspace }} # location for the settings.xml file
 
     - name: Setup Gradle
       uses: gradle/actions/setup-gradle@af1da67850ed9a4cedd57bfd976089dd991e2582 # v4.0.0
 
-    - name: Extract version from tag
-      run: echo "VERSION=${GITHUB_REF_NAME#v}" >> $GITHUB_ENV
+    - name: Configure Git
+      run: |
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+        git config user.name "github-actions[bot]"
+        git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/yunlong-song-awx/ap2-java-sdk.git
 
-    - name: Build with Gradle
-      run: ./gradlew build -Pversion=${{ env.VERSION }}
-
-    - name: Publish to GitHub Packages
-      run: ./gradlew publish -Pversion=${{ env.VERSION }}
+    - name: Release and Publish
+      run: ./gradlew release
       env:
         GITHUB_ACTOR: ${{ github.actor }}
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
