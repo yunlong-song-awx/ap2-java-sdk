@@ -36,7 +36,7 @@ publishing {
     repositories {
         maven {
             name = 'GitHubPackages'
-            url = 'https://maven.pkg.github.com/airwallex/ap2-java-sdk'
+            url = 'https://maven.pkg.github.com/yunlong-song-awx/ap2-java-sdk'
             credentials {
                 username = project.findProperty('gpr.user') ?: System.getenv('GITHUB_ACTOR')
                 password = project.findProperty('gpr.token') ?: System.getenv('GITHUB_TOKEN')
@@ -49,7 +49,7 @@ publishing {
             pom {
                 name = 'AP2 Java SDK'
                 description = 'Java SDK for Agent Payments Protocol (AP2)'
-                url = 'https://github.com/airwallex/ap2-java-sdk'
+                url = 'https://github.com/yunlong-song-awx/ap2-java-sdk'
                 licenses {
                     license {
                         name = 'Apache License, Version 2.0'
@@ -57,9 +57,9 @@ publishing {
                     }
                 }
                 scm {
-                    connection = 'scm:git:git://github.com/airwallex/ap2-java-sdk.git'
-                    developerConnection = 'scm:git:ssh://github.com/airwallex/ap2-java-sdk.git'
-                    url = 'https://github.com/airwallex/ap2-java-sdk'
+                    connection = 'scm:git:git://github.com/yunlong-song-awx/ap2-java-sdk.git'
+                    developerConnection = 'scm:git:ssh://github.com/yunlong-song-awx/ap2-java-sdk.git'
+                    url = 'https://github.com/yunlong-song-awx/ap2-java-sdk'
                 }
             }
         }
