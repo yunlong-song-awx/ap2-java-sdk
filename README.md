@@ -1,16 +1,36 @@
 # ap2-java-sdk
 JAVA SDK for Agent Payments Protocol (AP2) https://github.com/google-agentic-commerce/AP2
 
+[![Maven Central](https://img.shields.io/maven-central/v/io.github.yunlong-song-awx/ap2-java-sdk?color=blue)](https://central.sonatype.com/artifact/io.github.yunlong-song-awx/ap2-java-sdk)
+[![GitHub Package](https://img.shields.io/badge/github-packages-blue?logo=github)](https://github.com/yunlong-song-awx/ap2-java-sdk/packages/)
+
 ## Usage
 
-### Gradle
+### Maven Central
 ```groovy
 repositories {
     mavenCentral()
 }
 
 dependencies {
-    implementation 'io.github.yunlong-song-awx:ap2-java-sdk:0.1.8'
+    implementation 'io.github.yunlong-song-awx:ap2-java-sdk:0.1.9'
+}
+```
+
+### GitHub Packages
+```groovy
+repositories {
+    maven {
+        url = uri('https://maven.pkg.github.com/yunlong-song-awx/ap2-java-sdk')
+        credentials {
+            username = project.findProperty('gpr.user') ?: System.getenv('GITHUB_ACTOR')
+            password = project.findProperty('gpr.token') ?: System.getenv('GITHUB_TOKEN')
+        }
+    }
+}
+
+dependencies {
+    implementation 'io.github.yunlong-song-awx:ap2-java-sdk:0.1.9'
 }
 ```
 
@@ -19,7 +39,7 @@ dependencies {
 <dependency>
   <groupId>io.github.yunlong-song-awx</groupId>
   <artifactId>ap2-java-sdk</artifactId>
-  <version>0.1.8</version>
+  <version>0.1.9</version>
 </dependency>
 ```
 
