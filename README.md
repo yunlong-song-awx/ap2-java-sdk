@@ -1,6 +1,28 @@
 # ap2-java-sdk
 JAVA SDK for Agent Payments Protocol (AP2) https://github.com/google-agentic-commerce/AP2
 
+## Usage
+
+### Gradle
+```groovy
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'io.github.yunlong-song-awx:ap2-java-sdk:0.1.8'
+}
+```
+
+### Maven
+```xml
+<dependency>
+  <groupId>io.github.yunlong-song-awx</groupId>
+  <artifactId>ap2-java-sdk</artifactId>
+  <version>0.1.8</version>
+</dependency>
+```
+
 ## Release
 
 1. Go to **Actions** → **Gradle Package** → **Run workflow**

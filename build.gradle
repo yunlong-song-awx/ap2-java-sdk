@@ -1,18 +1,22 @@
 plugins {
     id 'java'
     id 'maven-publish'
+    id 'signing'
     id 'net.researchgate.release' version '3.0.2'
+    id 'io.github.gradle-nexus.publish-plugin' version '2.0.0'
 }
 
-group = 'com.airwallex'
+group = 'io.github.yunlong-song-awx'
 
 release {
     git {
         requireBranch.set('main')
     }
     tagTemplate = 'v${version}'
-    buildTasks = ['publish']
+    buildTasks = ['build']
 }
+
+afterReleaseBuild.dependsOn 'publishToSonatype', 'closeAndReleaseSonatypeStagingRepository'
 
 java {
     sourceCompatibility = JavaVersion.VERSION_17
@@ -40,17 +44,18 @@ test {
     useJUnitPlatform()
 }
 
-publishing {
+nexusPublishing {
     repositories {
-        maven {
-            name = 'GitHubPackages'
-            url = 'https://maven.pkg.github.com/yunlong-song-awx/ap2-java-sdk'
-            credentials {
-                username = project.findProperty('gpr.user') ?: System.getenv('GITHUB_ACTOR')
-                password = project.findProperty('gpr.token') ?: System.getenv('GITHUB_TOKEN')
-            }
+        sonatype {
+            nexusUrl.set(uri('https://s01.oss.sonatype.org/service/local/'))
+            snapshotRepositoryUrl.set(uri('https://s01.oss.sonatype.org/content/repositories/snapshots/'))
+            username = System.getenv('OSSRH_USERNAME')
+            password = System.getenv('OSSRH_PASSWORD')
         }
     }
+}
+
+publishing {
     publications {
         mavenJava(MavenPublication) {
             from components.java
@@ -69,7 +74,21 @@ publishing {
                     developerConnection = 'scm:git:ssh://github.com/yunlong-song-awx/ap2-java-sdk.git'
                     url = 'https://github.com/yunlong-song-awx/ap2-java-sdk'
                 }
+                developers {
+                    developer {
+                        id = 'yunlong-song-awx'
+                        name = 'Yunlong Song'
+                        email = 'yunlong.song@airwallex.com'
+                    }
+                }
             }
         }
     }
+}
+
+signing {
+    def signingKey = System.getenv('GPG_PRIVATE_KEY')
+    def signingPassword = System.getenv('GPG_PASSPHRASE')
+    useInMemoryPgpKeys(signingKey, signingPassword)
+    sign publishing.publications.mavenJava
 }
