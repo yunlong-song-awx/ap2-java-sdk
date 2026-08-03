@@ -79,11 +79,7 @@ class KbSdJwtTest {
         ParsedToken rootParsed = SdJwtCommon.parseToken(rootToken);
         Map<String, Object> rootVerified = SdJwt.verify(rootToken, issuerKey.toECPublicKey());
         ParsedToken rootWithVerified = rootParsed.withVerifiedPayload(rootVerified, List.of(rootVerified));
-        PaymentMandate paymentPayload = new PaymentMandate(null, "txn-1",
-                new Merchant("m1", "Shop", null),
-                new Amount(500, "USD"),
-                new PaymentInstrument("card-1", "card", null),
-                null, null, null, System.currentTimeMillis() / 1000, null, null);
+        PaymentMandate paymentPayload = new PaymentMandate(null, "txn-1", new Merchant("m1", "Shop", null), new Amount(500, "USD"), new PaymentInstrument("card-1", "card", null), null, null, null, System.currentTimeMillis() / 1000, null);
         SdJwtIssuer kbIssuer = KbSdJwt.create(rootWithVerified, holderKey.toECPrivateKey(),
                 paymentPayload, "https://verifier.example.com", "nonce-123", null, null, "sd_hash", false);
         String kbToken = kbIssuer.getSdJwtIssuance();
@@ -98,11 +94,7 @@ class KbSdJwtTest {
         ParsedToken rootParsed = SdJwtCommon.parseToken(rootToken);
         Map<String, Object> rootVerified = SdJwt.verify(rootToken, issuerKey.toECPublicKey());
         ParsedToken rootWithVerified = rootParsed.withVerifiedPayload(rootVerified, List.of(rootVerified));
-        PaymentMandate paymentPayload = new PaymentMandate(null, "txn-1",
-                new Merchant("m1", "Shop", null),
-                new Amount(500, "USD"),
-                new PaymentInstrument("card-1", "card", null),
-                null, null, null, System.currentTimeMillis() / 1000, null, null);
+        PaymentMandate paymentPayload = new PaymentMandate(null, "txn-1", new Merchant("m1", "Shop", null), new Amount(500, "USD"), new PaymentInstrument("card-1", "card", null), null, null, null, System.currentTimeMillis() / 1000, null);
         assertThatThrownBy(() -> {
             KbSdJwt.create(rootWithVerified, holderKey.toECPrivateKey(), paymentPayload, "", "nonce-123",
                     null, null, "sd_hash", false);
@@ -115,11 +107,7 @@ class KbSdJwtTest {
         ParsedToken rootParsed = SdJwtCommon.parseToken(rootToken);
         Map<String, Object> rootVerified = SdJwt.verify(rootToken, issuerKey.toECPublicKey());
         ParsedToken rootWithVerified = rootParsed.withVerifiedPayload(rootVerified, List.of(rootVerified));
-        PaymentMandate paymentPayload = new PaymentMandate(null, "txn-1",
-                new Merchant("m1", "Shop", null),
-                new Amount(500, "USD"),
-                new PaymentInstrument("card-1", "card", null),
-                null, null, null, System.currentTimeMillis() / 1000, null, null);
+        PaymentMandate paymentPayload = new PaymentMandate(null, "txn-1", new Merchant("m1", "Shop", null), new Amount(500, "USD"), new PaymentInstrument("card-1", "card", null), null, null, null, System.currentTimeMillis() / 1000, null);
         assertThatThrownBy(() -> {
             KbSdJwt.create(rootWithVerified, holderKey.toECPrivateKey(), paymentPayload, "https://example.com", "",
                     null, null, "sd_hash", false);
@@ -153,11 +141,7 @@ class KbSdJwtTest {
         ParsedToken rootParsed = SdJwtCommon.parseToken(rootToken);
         Map<String, Object> rootVerified = SdJwt.verify(rootToken, issuerKey.toECPublicKey());
         ParsedToken rootWithVerified = rootParsed.withVerifiedPayload(rootVerified, List.of(rootVerified));
-        PaymentMandate paymentPayload = new PaymentMandate(null, "txn-1",
-                new Merchant("m1", "Shop", null),
-                new Amount(500, "USD"),
-                new PaymentInstrument("card-1", "card", null),
-                null, null, null, System.currentTimeMillis() / 1000, null, null);
+        PaymentMandate paymentPayload = new PaymentMandate(null, "txn-1", new Merchant("m1", "Shop", null), new Amount(500, "USD"), new PaymentInstrument("card-1", "card", null), null, null, null, System.currentTimeMillis() / 1000, null);
         SdJwtIssuer kbIssuer = KbSdJwt.create(rootWithVerified, holderKey.toECPrivateKey(),
                 paymentPayload, "https://verifier.example.com", "nonce-123", null, null, "issuer_jwt_hash", false);
         String kbToken = kbIssuer.getSdJwtIssuance();

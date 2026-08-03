@@ -139,6 +139,61 @@ public class DisclosureMetadata {
         return data;
     }
 
+    public static DisclosureMetadata fromModel(Object obj) {
+        if (obj == null) return null;
+        var kClass = obj.getClass();
+        List<String> sdKeys = new ArrayList<>();
+        Map<String, DisclosureMetadata> children = new HashMap<>();
+
+        for (var field : kClass.getDeclaredFields()) {
+            SelectivelyDisclosable sd = field.getAnnotation(SelectivelyDisclosable.class);
+            Object value;
+            try {
+                field.setAccessible(true);
+                value = field.get(obj);
+            } catch (Exception e) {
+                value = null;
+            }
+            String name = field.getName();
+
+            if (sd != null && sd.field()) {
+                sdKeys.add(name);
+                continue;
+            }
+            if (sd != null && sd.array()) {
+                children.put(name, ofDiscloseAll(true));
+                continue;
+            }
+            if (value != null && !(value instanceof String) && !(value instanceof Number) && !(value instanceof Boolean)
+                    && !(value instanceof Enum<?>)) {
+                if (value instanceof List<?> listVal) {
+                    Map<Integer, DisclosureMetadata> arrayChildren = new HashMap<>();
+                    for (int i = 0; i < listVal.size(); i++) {
+                        Object item = listVal.get(i);
+                        if (item != null) {
+                            DisclosureMetadata childMeta = fromModel(item);
+                            if (childMeta != null) {
+                                arrayChildren.put(i, childMeta);
+                            }
+                        }
+                    }
+                    if (!arrayChildren.isEmpty()) {
+                        children.put(name, new DisclosureMetadata(
+                                List.of(), List.of(), false, Map.of(), arrayChildren, null));
+                    }
+                } else {
+                    DisclosureMetadata childMeta = fromModel(value);
+                    if (childMeta != null) {
+                        children.put(name, childMeta);
+                    }
+                }
+            }
+        }
+
+        if (sdKeys.isEmpty() && children.isEmpty()) return null;
+        return new DisclosureMetadata(sdKeys, List.of(), false, children, Map.of(), null);
+    }
+
     public static Map<String, Object> sdClaimsToDisclose(Object obj) {
         Map<String, Object> result = new HashMap<>();
         var kClass = obj.getClass();

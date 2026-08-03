@@ -106,10 +106,7 @@ class ProtocolTypesTest {
 
     @Test
     void paymentMandateWithPispAndRiskData() {
-        var mandate = new PaymentMandate(null, "txn-1", new Merchant("m", "Shop", null),
-                new Amount(500, "EUR"), new PaymentInstrument("c", "card", null),
-                new Pisp("L", "B", "d.com"), "2025-01-01",
-                Map.of("ip", "127.0.0.1"), null, null, null);
+        var mandate = new PaymentMandate(null, "txn-1", new Merchant("m", "Shop", null), new Amount(500, "EUR"), new PaymentInstrument("c", "card", null), new Pisp("L", "B", "d.com"), "2025-01-01", Map.of("ip", "127.0.0.1"), null, null);
         assertThat(mandate.pisp()).isNotNull();
         assertThat(mandate.riskData()).containsKey("ip");
         assertThat(mandate.executionDate()).isEqualTo("2025-01-01");

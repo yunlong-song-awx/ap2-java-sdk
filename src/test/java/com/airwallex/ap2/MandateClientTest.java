@@ -6,6 +6,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import com.airwallex.ap2.mandate.MandateClient;
 import com.airwallex.ap2.protocol.Amount;
 import com.airwallex.ap2.protocol.CheckoutMandate;
+import com.airwallex.ap2.protocol.OpenCheckoutMandate;
 import com.airwallex.ap2.protocol.Merchant;
 import com.airwallex.ap2.protocol.PaymentInstrument;
 import com.airwallex.ap2.protocol.PaymentMandate;
@@ -37,12 +38,7 @@ class MandateClientTest {
     }
 
     private PaymentMandate paymentMandate() {
-        return new PaymentMandate(null, "txn-123",
-                new Merchant("m-1", "Shop", null),
-                new Amount(1000, "USD"),
-                new PaymentInstrument("card-1", "card", null),
-                null, null, null,
-                System.currentTimeMillis() / 1000, null, null);
+        return new PaymentMandate(null, "txn-123", new Merchant("m-1", "Shop", null), new Amount(1000, "USD"), new PaymentInstrument("card-1", "card", null), null, null, null, System.currentTimeMillis() / 1000, null);
     }
 
     @Test
@@ -141,5 +137,55 @@ class MandateClientTest {
         List<Map<String, Object>> payloads = client.verify(chainToken, provider, "https://verifier.example.com",
                 "nonce-1", 300, System.currentTimeMillis() / 1000);
         assertThat(payloads).hasSizeGreaterThanOrEqualTo(2);
+    }
+
+    @Test
+    void threeLevelCheckoutChainAgentProviderShoppingAgentUser() throws Exception {
+        // See docs/ap2/checkout_mandate.md for the domain model.
+        // Level 1: Issuer (Agent Provider) signs the root SD-JWT, delegating to the Shopping Agent
+        // Level 2: Shopping Agent presents the Open Checkout Mandate, delegating to the User
+        // Level 3: User presents the Closed Checkout Mandate (terminal), aud = Merchant
+        ECKey issuerKey = new ECKeyGenerator(Curve.P_256).generate();
+        ECKey shoppingAgentKey = new ECKeyGenerator(Curve.P_256).generate();
+        ECKey userKey = new ECKeyGenerator(Curve.P_256).generate();
+
+        OpenCheckoutMandate rootPayload = new OpenCheckoutMandate(null, List.of(), null, null, null);
+        String rootToken = client.create(
+                List.of(rootPayload), issuerKey.toECPrivateKey(), null, null,
+                shoppingAgentKey.toECPublicKey(), null);
+
+        Map<String, Object> userCnf = Map.of("jwk", Map.of(
+                "kty", "EC", "crv", "P-256",
+                "x", userKey.getX().toString(),
+                "y", userKey.getY().toString()));
+        OpenCheckoutMandate openMandate = new OpenCheckoutMandate(null, List.of(), userCnf, null, null);
+        String chain2 = client.present(shoppingAgentKey.toECPrivateKey(), rootToken,
+                List.of(openMandate), "nonce-sa", "https://shopping-agent.example.com");
+        assertThat(chain2.split("~~")).hasSize(2);
+
+        CheckoutMandate closedMandate = new CheckoutMandate(null, "eyJhbGciOiJFUzI1NiJ9.dGVzdA.sig",
+                CryptoUtils.computeSha256B64url("test"), System.currentTimeMillis() / 1000, null);
+        String chain3 = client.present(userKey.toECPrivateKey(), chain2,
+                List.of(closedMandate), "nonce-user", "https://merchant.example.com");
+        assertThat(chain3.split("~~")).hasSize(3);
+
+        SdJwtChain.PublicKeyProvider provider = token -> {
+            try {
+                return issuerKey.toECPublicKey();
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        };
+        List<Map<String, Object>> payloads = client.verify(chain3, provider,
+                "https://merchant.example.com", "nonce-user", 300,
+                System.currentTimeMillis() / 1000);
+        assertThat(payloads).hasSize(3);
+    }
+
+    @Test
+    void verifyRejectsNonSdJwtFormatInSingleMode() throws Exception {
+        assertThatThrownBy(() -> client.verify("plain-jwt-without-tilde", issuerKey.toECPublicKey(), null, null, 300, null))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Only SD-JWT formats");
     }
 }
