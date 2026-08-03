@@ -31,7 +31,7 @@ public class UcpPublicKeyProvider implements SdJwtChain.PublicKeyProvider {
     @Override
     public ECPublicKey resolve(SdJwtCommon.ParsedToken token) {
         Map<String, Object> header = token.getHeader();
-        String iss = (String) header.get("iss");
+        String iss = (String) token.getPayload().get("iss");
         String kid = (String) header.get("kid");
         return fetchPublicKey(iss, kid);
     }
